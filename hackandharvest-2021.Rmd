@@ -1,0 +1,231 @@
+---
+title: "HACK AND HARVEST Hackathon 2021"
+output: html_notebook
+---
+
+```{r}
+Sys.setlocale("LC_ALL","de_DE")
+```
+
+```{r}
+rm(list=ls())
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+raw <- read.csv('data/KN_Baumkataster_2020.csv') %>%
+    rename(x = X.X) %>%
+    rename(y = Y) %>%
+    rename(hoehe = hoeheM) %>%
+    rename(kronendurchmesser = kronendurchmesserM) %>%
+    rename(stammumfang = stammumfangCM) %>%
+    rename(name_de = Name_dt) %>%
+    rename(name_la = Name_lat) %>%
+    rename(ort = location)
+```
+
+```{r}
+kataster <- raw %>%
+    mutate(name_de = replace(name_de, name_de == "Amberbaum", "Amberbäume, Amberbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Apfel 'Boskoop'", "Äpfel, Apfel, 'Boskoop")) %>%
+    mutate(name_de = replace(name_de, name_de == "Apfeldorn", "Weißdorne, Apfeldorn")) %>%
+    mutate(name_de = replace(name_de, name_de == "Atlas-Zeder", "Zedern, Atlas-Zeder")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Bergahorn 'Rotterdam'", "Ahorne, Bergahorn 'Rotterdam'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Berliner Lorbeer-Pappel", "Pappeln, Berliner Lorbeerpappel")) %>%
+    mutate(name_de = replace(name_de, name_de == "Blasenesche", "Koelreuteria, Blasenesche")) %>%
+    mutate(name_de = replace(name_de, name_de == "blaue Kegel-Zypresse", "Zypressen, Blaue Kegelzypresse")) %>%
+    mutate(name_de = replace(name_de, name_de == "Blaue Scheinzypresse", "Scheinzypressen, Blaue Scheinzypresse")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Blaue Stechfichte", "Fichten, Stech-Fichte ''Glauca'")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Blut-Buche", "Buchen, Blutbuche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Blutpflaume", "Prunus, Blutpflaume")) %>%
+    mutate(name_de = replace(name_de, name_de == "Brabanter Silber-Linde", "Linden, Silberlinde 'Brabant'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Buchsbaum", "Buchsbäume, Buchsbaum")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Chinesische Birne", "Birnen, Chinesische Birne")) %>%
+    mutate(name_de = replace(name_de, name_de == "Dornenlose Gleditschie", "Gleditschien, Dornenlose Gleditschie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Douglasie", "Douglasien, Douglasie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Einblättrige Esche", "Eschen, Einblättrige Esche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Elsbeere", "Mehlbeeren, Elsbeere")) %>%
+    mutate(name_de = replace(name_de, name_de == "Esche 'Altena'", "Eschen, Esche 'Altena'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Esche 'Geessink'", "Eschen, Esche 'Geessink'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Faulbaum", "Kreuzdorn, Faulbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Felsenbirne 'Robin Hill'", "Felsenbirnen, Felsenbirne 'Robin Hill'")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Flatter-Ulme", "Ulmen, Flatterulme")) %>%
+    mutate(name_de = replace(name_de, name_de == "Frühe Zier-Kirsche", "Prunus, Frühe Zierkirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Gefülltblühende Roßkastanie", "Roßkastanien, Gefülltblühende Roßkastanie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Gefüllte Vogel-Kirsche", "Prunus, Gefüllte Vogelkirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Ginkgo", "Ginkgo, Ginkgo")) %>%
+    mutate(name_de = replace(name_de, name_de == "Gold-Birke", "Birken, Gold-Birke")) %>%
+    mutate(name_de = replace(name_de, name_de == "Großer Lebensbaum", "Lebensbäume, Großer Lebensbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Großlaubige Mehlbeere", "Mehlbeeren, Großlaubige Mehlbeere")) %>%
+    mutate(name_de = replace(name_de, name_de == "Hainbuche 'Frans Fontaine'", "Hainbuchen, Hainbuche 'Frans Fontaine'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Hänge-Birke", "Birken, Hänge-Birke")) %>%
+    mutate(name_de = replace(name_de, name_de == "Herbstblühende Schnee-Kirsche", "Prunus, Winterkirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Himalaja-Birke", "Birken, Himalaja-Birke")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Holzbirne Beech Hill", "Birnen, Holzbirne 'Beech Hill'")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Hopfenbuche", "Hopfenbuchen, Hopfenbuche")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Judasblattbaum", "Judasblattbäume, Judasbaum")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Kaiser-Linde", "Linden, Kaiser-Linde")) %>%
+    mutate(name_de = replace(name_de, name_de == "Kegel-Feld-Ahorn", "Ahorne, Kegel-Feldahorn")) %>%
+    mutate(name_de = replace(name_de, name_de == "Kegel-Linde 'Glenleven'", "Linden, Kegel-Linde 'Glenleven'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Kegel-Silber-Weide", "Weiden, Silber-Weide 'Liempde'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Konstanzer Mostbirne", "Birnen, Konstanzer Mostbirne")) %>%
+    mutate(name_de = replace(name_de, name_de == "Korkenzieher-Weide", "Weiden, Korkenzieher-Weide")) %>%
+    mutate(name_de = replace(name_de, name_de == "Kuchenbaum", "Japanischer Kuchenbäume, Japanischer Kuchenbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Kugel-Esche", "Eschen, Kugel-Esche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Kugelrobinie", "Robinien, Kugel-Robinie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Kultur-Apfel", "Äpfel, Kultur-Apfel")) %>%
+    mutate(name_de = replace(name_de, name_de == "Lawson´s Scheinzypresse", "Scheinzypressen, Scheinzypresse 'Lawson'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Linde \"Greespire\"", "Linden, Winterlinde 'Greenspire'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Mammutbaum", "Sequoiadendron, Riesenmammutbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Mehlbeere", "Mehlbeeren, Mehlbeere")) %>%
+    mutate(name_de = replace(name_de, name_de == "Mirabelle", "Prunus, Mirabelle")) %>%
+    mutate(name_de = replace(name_de, name_de == "Nelken-Kirsche", "Prunus, Japanische Nelkenkirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Pflaumenblättriger Weißdorn", "Weißdorne, Pflaumenblättriger Weißdorn")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Platane", "Platanen, Platane")) %>%
+    mutate(name_de = replace(name_de, name_de == "Purpur-Erle", "Erlen, Purpur-Erle")) %>%
+    mutate(name_de = replace(name_de, name_de == "Purpur-Esche", "Eschen, Purpur-Esche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Purpur-Perückenstrauch", "Perückensträucher, Purpur-Perückenstrauch")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Quitte", "Cydonia, Quitte")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Robusta-Pappel", "Pappeln, Kanadische Pappel 'Robusta'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Rosa Schnee-Kirsche", "Prunus, Frühlingskirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Rosskastanie `Briotii`", "Rosskastanien, Rosskastanie `Briotii`")) %>%
+    mutate(name_de = replace(name_de, name_de == "Rosskastanie", "Rosskastanien, Rosskastanie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Rot-Dorn", "Weißdorne, Echter Rotdorn")) %>%
+    mutate(name_de = replace(name_de, name_de == "Roter Schlangenhaut-Ahorn", "Ahorne, Roter Schlangenhaut-Ahorn")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Säulen-Eibe", "Eiben, Säulen-Eibe")) %>%
+    mutate(name_de = replace(name_de, name_de == "Säulen-Hainbuche", "Hainbuchen, Säulenhainbuche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Säulen-Pappel", "Pappeln, Säulenpappel")) %>%
+    mutate(name_de = replace(name_de, name_de == "Säulen-Spitz-Ahorn", "Ahorne, Säulen-Spitzahorn")) %>%
+    mutate(name_de = replace(name_de, name_de == "Säulen-Weißdorn", "Weißdorne, Säulen-Weißdorn")) %>%
+    mutate(name_de = replace(name_de, name_de == "Säulen-Zierkirsche", "Prunus, Japanische Blütenkirsche 'Amanogawa'")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Scharlach-Weißdorn", "Weißdorne, Scharlach-Weißdorn")) %>%    
+    mutate(name_de = replace(name_de, name_de == "schmalblättrige Ölweide", "Ölweiden, Schmalblättrige Ölweide")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Schmalkronige Gleditschie", "Gleditschien, Schmalkronige Gleditschie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Schmalkronige Mehlbeere", "Mehlbeeren, Schmalkronige Mehlbeere")) %>%
+    mutate(name_de = replace(name_de, name_de == "Schmalkronige Stadt-Ulme", "Ulmen, Schmalkronige Stadtulme")) %>%
+    mutate(name_de = replace(name_de, name_de == "Schmalkroniger Rot-Ahorn", "Ahorne, Schmalkroniger Rot-Ahorn")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Schnurbaum 'Regent'", "Schnurbäume, Schnurbaum 'Regent'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Schnurbaum", "Styphnolobium, Japanischer Schnurbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Schwarz-Kiefer", "Kiefern, Schwarz-Kiefer")) %>%
+    mutate(name_de = replace(name_de, name_de == "Schwedler´s Spitz-Ahorn", "Ahorne, Spitzahorn 'Schwedleri'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Silber-Linde 'Argentea'", "Linden, Silber-Linde 'Argentea'")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Silber-Pappel", "Pappeln, Silber-Pappel")) %>%
+    mutate(name_de = replace(name_de, name_de == "Spiegelrinden-Kirsche", "Prunus, Spiegelrinden-Kirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Straßen-Akazie", "Akazien, Straßenakazie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Straßen-Esche", "Eschen, Straßenesche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Strauch-Eibisch 'Totus albus'", "Straucheibisch, Straucheibisch 'Totus albus'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Thüringesche-Mehlbeere", "Mehlbeeren, Thüringer Mehlbeere")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Thüringische Mehlbeere", "Mehlbeeren, Thüringer Mehlbeere")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Trauer-Weide", "Weiden, Trauerweide")) %>%
+    mutate(name_de = replace(name_de, name_de == "Trompetenbaum", "Trompetenbäume, Trompetenbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Tulpen-Magnolie", "Magnolien, Tulpen-Magnolie")) %>%
+    mutate(name_de = replace(name_de, name_de == "Tulpenbaum", "Tulpenbäume, Tulpenbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Ulme Dodoens", "Ulmen, Ulme 'Dodoens'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Ulme New Horizon", "Ulmen, Ulme 'New Horizon'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Ulmus Hybride 'Commelin'", "Ulmen, Ulme 'Commelin'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Urweltmammutbaum", "Metasequoia, Urweltmammutbaum")) %>%
+    mutate(name_de = replace(name_de, name_de == "Vogel-Kirsche", "Prunus, Vogelkirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Winter-Linde 'Rancho'", "Linden, Winterlinde 'Rancho'")) %>%
+    mutate(name_de = replace(name_de, name_de == "Yoshino-Kirsche", "Prunus, Japanische Maienkirsche")) %>%
+    mutate(name_de = replace(name_de, name_de == "Zierapfel evereste", "Äpfel, Zierapfel 'Evereste'")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zierapfel sargentii", "Äpfel, Zierapfel 'Sargentii'")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zierapfel", "Äpfel, Zierapfel")) %>%
+    mutate(name_de = replace(name_de, name_de == "Chinesische-Birne", "Pyrus, Chinesische-Birne")) %>%
+    mutate(name_de = replace(name_de, name_de == "Eibisch", "Malvengewächse, Straucheibisch")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Gehölze", "Gehölze, Gehölze")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Hängende Nelken-Kirsche", "Prunus, Hängende Nelken-Kirsch")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Kanadische Felsenbirne", "Felsenbirnen, Kanadische Felsenbirne")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Kirsche", "Prunus, Kirsche")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Korkenzieher-Hasel", "Haseln, Korkenzieherhasel")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Pagoden-Hartriegel", "Hartriegelgewächse, Pagoden-Hartriegel")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Roter-Fächer-Ahorn", "Ahorne, Roter Fächer-Ahorn")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Asch-Weide", "Weiden, Asch-Weide")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Flesenbirne, kupferrote Felsenbirne", "Felsenbirnen, Kupferrote Felsenbirne")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
+    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
+
+    separate(name_de, into=c('gattung','name_de'), sep=',', extra='merge', fill='left') %>%
+
+
+    mutate(gattung = replace(gattung, gattung == "Ahorn", "Ahorne")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Apfelbaum", "Äpfel")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Arve", "Kiefern")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Birke", "Birken")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Birne", "Birnen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Buche", "Buchen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Eibe", "Eiben")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Erle", "Erlen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Esche", "Eschen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Fichte", "Fichten")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Gleditschie", "Gleditschien")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Hartriegel", "Hartriegelgewächse")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Kastanie", "Kastanien")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Kiefer", "Kiefern")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Linde", "Linden")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Magnolie", "Magnolien")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Kirsche", "Prunus")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Maulbeerbaum", "Maulbeeren")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Mehlbeere", "Mehlbeeren")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Nussbaum", "Walnüsse")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Pappel", "Pappeln")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Platane", "Platanen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Ulme", "Ulmen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Weide", "Weiden")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Weißdorn", "Weißdorne")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Flügelnuß", "Flügelnüsse")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Hasel", "Haseln")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Hemlockstanne", "Hemlockstannen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Lärche", "Lärchen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Maulbeere", "Maulbeeren")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Rosskastanie", "Rosskastanien")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Roßkastanien", "Rosskastanien")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Straucheibisch", "Eibisch")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Tanne", "Tannen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Wald-Kiefer", "Kiefern")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Zürgelbaum", "Zürgelbäume")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Eiche", "Eichen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Scheinakazie", "Robinien")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Schwarzdorn", "Prunus")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Stechpalme", "Stechpalmen")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Vogelbeere", "Mehlbeeren")) %>%    
+    mutate(gattung = replace(gattung, gattung == "Weißbuche", "Hainbuchen")) %>%    
+
+        
+    select(-c('baumId', 'baumNr', 'AGOL_Name', 'OBJECTID'))
+
+
+missing <- kataster[!complete.cases(kataster),] %>%
+    filter(is.na(gattung)) %>%
+    group_by(name_de, name_la) %>%
+    summarise(n=n()) %>%
+    arrange(desc(n))
+missing
+
+gattungen <- unique(kataster$gattung)
+sort(gattungen)
+```
+```{r}
+kataster %>%
+    group_by(gattung) %>%
+    summarize(n = n()) %>%
+    arrange(desc(n))
+```
+
+```{r}
+kataster %>%
+    group_by(name_de) %>%
+    summarize(n = n()) %>%
+    arrange(desc(n))
+
+```
+
