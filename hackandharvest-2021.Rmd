@@ -1,6 +1,14 @@
 ---
 title: "HACK AND HARVEST Hackathon 2021"
-output: html_notebook
+subtitle: "Elementare CO<sub>2</sub> Bilanz für Konstanz"
+author: 
+  name: Ralph Rogge
+date: 17. April 2021
+output:
+  html_document:
+    css: "hackandharvest-2021.css"
+    code_folding: show
+    df_print: paged
 ---
 
 ```{r}
@@ -13,12 +21,17 @@ rm(list=ls())
 
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
+library(ggmap)
 library(dplyr)
+library(kableExtra)
+library(osmdata)
 library(tidyr)
 ```
 
+## Vorverarbeitung
+
 ```{r}
-raw <- read.csv('data/KN_Baumkataster_2020.csv') %>%
+raw <- read.csv('data/KN_Baumkataster_2020.csv', strip.white=TRUE) %>%
     rename(x = X.X) %>%
     rename(y = Y) %>%
     rename(hoehe = hoeheM) %>%
@@ -26,10 +39,14 @@ raw <- read.csv('data/KN_Baumkataster_2020.csv') %>%
     rename(stammumfang = stammumfangCM) %>%
     rename(name_de = Name_dt) %>%
     rename(name_la = Name_lat) %>%
-    rename(ort = location)
+    rename(standort = location)
 ```
 
-```{r}
+```{r class.source = 'fold-hide'}
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+```
+
+```{r class.source = 'fold-hide'}
 kataster <- raw %>%
     mutate(name_de = replace(name_de, name_de == "Amberbaum", "Amberbäume, Amberbaum")) %>%
     mutate(name_de = replace(name_de, name_de == "Apfel 'Boskoop'", "Äpfel, Apfel, 'Boskoop")) %>%
@@ -156,7 +173,6 @@ kataster <- raw %>%
 
     separate(name_de, into=c('gattung','name_de'), sep=',', extra='merge', fill='left') %>%
 
-
     mutate(gattung = replace(gattung, gattung == "Ahorn", "Ahorne")) %>%    
     mutate(gattung = replace(gattung, gattung == "Apfelbaum", "Äpfel")) %>%    
     mutate(gattung = replace(gattung, gattung == "Arve", "Kiefern")) %>%    
@@ -200,32 +216,399 @@ kataster <- raw %>%
     mutate(gattung = replace(gattung, gattung == "Vogelbeere", "Mehlbeeren")) %>%    
     mutate(gattung = replace(gattung, gattung == "Weißbuche", "Hainbuchen")) %>%    
 
-        
-    select(-c('baumId', 'baumNr', 'AGOL_Name', 'OBJECTID'))
-
-
-missing <- kataster[!complete.cases(kataster),] %>%
-    filter(is.na(gattung)) %>%
-    group_by(name_de, name_la) %>%
-    summarise(n=n()) %>%
-    arrange(desc(n))
-missing
-
-gattungen <- unique(kataster$gattung)
-sort(gattungen)
+    select(-c('baumId', 'baumNr', 'AGOL_Name', 'OBJECTID')) %>%
+    mutate_if(is.character, trim) %>%
+    mutate_if(is.character, as.factor)
 ```
+
+Anzahl der Bäume im Kataster
+```{r}
+nrow(kataster)
+```
+
+## EDA
+
+### Bäume
+
+#### Gattung
+
+```{r, fig.align='center', out.width='1000px'}
+kataster %>%
+    filter(!is.na(gattung)) %>%
+    ggplot() +
+        geom_bar(aes(x=reorder(gattung, -table(gattung)[gattung]))) +
+        labs(title='Verteilung der Gattungen', x='Gattung', y='Anzahl Bäume') +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
 ```{r}
 kataster %>%
+    filter(!is.na(gattung)) %>%
     group_by(gattung) %>%
     summarize(n = n()) %>%
-    arrange(desc(n))
+    arrange(desc(n)) %>%
+    select(Gattung=gattung, 'Anzahl Bäume'=n) %>%
+    kable %>%
+    kable_styling("striped", full_width = F) %>%
+    scroll_box(height = "300px")
 ```
+Anzahl der unterschiedlichen Gattungen
+```{r}
+length(unique(kataster[!is.na(kataster$gattung),'gattung']))
+```
+
+Anzahl der Bäume ohne einen gültigen Wert für die Gattung
+```{r}
+nrow(kataster[is.na(kataster$gattung),])
+```
+
+
+#### Arten
 
 ```{r}
 kataster %>%
+    filter(!is.na(name_de)) %>%
     group_by(name_de) %>%
     summarize(n = n()) %>%
-    arrange(desc(n))
-
+    arrange(desc(n)) %>%
+    select(Art=name_de, 'Anzahl Bäume'=n) %>%
+    kable %>%
+    kable_styling("striped", full_width = F) %>%
+    scroll_box(height = "300px")
+```
+Anzahl der unterschiedlichen Arten
+```{r}
+length(unique(kataster[!is.na(kataster$name_de),'name_de']))
 ```
 
+Anzahl der Bäume ohne einen gültigen Wert für die Art
+```{r}
+nrow(kataster[is.na(kataster$name_de),])
+```
+
+#### Stammmumfang
+
+```{r}
+ggplot(kataster %>% filter(!is.na(stammumfang))) +
+    geom_histogram(aes(x=stammumfang), binwidth=25) +
+    labs(title='Verteilung des Stammmumfang', x='Stammumfang [cm]', y='Anzahl Bäume') +
+    theme_bw()
+```
+```{r}
+kataster %>%
+    filter(!is.na(stammumfang)) %>%
+    group_by(stammumfang) %>%
+    summarize(n = n()) %>%
+    arrange(desc(stammumfang)) %>%
+    select(Stammumfang=stammumfang, 'Anzahl Bäume'=n) %>%
+    kable %>%
+    kable_styling("striped", full_width = F) %>%
+    scroll_box(height = "300px")
+```
+Anzahl der Bäume ohne einen gültigen Wert für den Stammumfang
+```{r}
+nrow(kataster[is.na(kataster$stammumfang),])
+```
+
+```{r, fig.align='center', out.width='1000px', message=FALSE}
+bb <- c(9.12, 47.65, 9.22, 47.70)
+map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+data <- kataster %>% 
+    filter(!is.na(stammumfang)) %>%
+    filter(x >= bb[1] & x <= bb[3]) %>%
+    filter(y >= bb[2] & y <= bb[4]) %>%
+    arrange(stammumfang)
+size <- data$stammumfang / 250
+ggmap(map) +
+    geom_point(data=data, aes(x=x, y=y, color=stammumfang), size=size, alpha=0.5) +
+    labs(title='Bäume in Konstanz (Stammumfang)') +
+    theme_void() +
+    theme(legend.position="bottom") +
+    scale_color_continuous(name='Stammumfang in Zentimeter')
+```
+
+#### Höhe
+
+```{r}
+ggplot(kataster %>% filter(!is.na(hoehe))) +
+    geom_histogram(aes(x=hoehe), binwidth=1) +
+    labs(title='Verteilung der Baumhöhe', x='Baumhöhe [m]', y='Anzahl Bäume') +
+    theme_bw()
+```
+```{r}
+kataster %>%
+    filter(!is.na(hoehe)) %>%
+    group_by(hoehe) %>%
+    summarize(n = n()) %>%
+    arrange(desc(hoehe)) %>%
+    select(Höhe=hoehe, 'Anzahl Bäume'=n) %>%
+    kable %>%
+    kable_styling("striped", full_width = F) %>%
+    scroll_box(height = "300px")
+```
+Anzahl der Bäume ohne einen gültigen Wert für die Höhe
+```{r}
+nrow(kataster[is.na(kataster$hoehe),])
+```
+
+```{r, fig.align='center', out.width='1000px', message=FALSE}
+bb <- c(9.12, 47.65, 9.22, 47.70)
+map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+data <- kataster %>% 
+    filter(!is.na(hoehe)) %>%
+    filter(x >= bb[1] & x <= bb[3]) %>%
+    filter(y >= bb[2] & y <= bb[4]) %>%
+    arrange(hoehe)
+size <- data$hoehe / 10
+ggmap(map) +
+    geom_point(data=data, aes(x=x, y=y, color=hoehe), size=size, alpha=0.5) +
+    labs(title='Bäume in Konstanz (Höhe)') +
+    theme_void() +
+    theme(legend.position="bottom") +
+    scale_color_continuous(name='Höhe in Meter')
+```
+
+#### Kronendurchmesser
+
+```{r}
+ggplot(kataster %>% filter(!is.na(kronendurchmesser))) +
+    geom_histogram(aes(x=kronendurchmesser), binwidth=1) +
+    labs(title='Verteilung der Kronendurchmesser', x='Kronendurchmesser [m]', y='Anzahl Bäume') +
+    theme_bw()
+```
+```{r}
+kataster %>%
+    filter(!is.na(kronendurchmesser)) %>%
+    group_by(kronendurchmesser) %>%
+    summarize(n = n()) %>%
+    arrange(desc(kronendurchmesser)) %>%
+    select(Kronendurchmesser=kronendurchmesser, 'Anzahl Bäume'=n) %>%
+    kable %>%
+    kable_styling("striped", full_width = F) %>%
+    scroll_box(height = "300px")
+```
+Anzahl der Bäume ohne einen gültigen Wert für den Kronendurchmesser
+```{r}
+nrow(kataster[is.na(kataster$kronendurchmesser),])
+```
+
+```{r, fig.align='center', out.width='1000px', message=FALSE}
+bb <- c(9.12, 47.65, 9.22, 47.70)
+map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+data <- kataster %>% 
+    filter(!is.na(kronendurchmesser)) %>%
+    filter(x >= bb[1] & x <= bb[3]) %>%
+    filter(y >= bb[2] & y <= bb[4]) %>%
+    arrange(kronendurchmesser)
+size <- data$kronendurchmesser / 10
+ggmap(map) +
+    geom_point(data=data, aes(x=x, y=y, color=kronendurchmesser), size=size, alpha=0.5) +
+    labs(title='Bäume in Konstanz (Kronendurchmesser)') +
+    theme_void() +
+    theme(legend.position="bottom") +
+    scale_color_continuous(name='Kronendurchmesser')
+```
+
+#### Standort
+
+```{r}
+kataster %>%
+    filter(!is.na(standort)) %>%
+    group_by(standort) %>%
+    summarize(n = n()) %>%
+    arrange(desc(n)) %>%
+    select(Standort=standort, 'Anzahl Bäume'=n) %>%
+    kable %>%
+    kable_styling("striped", full_width = F) %>%
+    scroll_box(height = "300px")
+```
+
+Anzahl der Bäume ohne einen gültigen Wert für den Standort
+```{r}
+nrow(kataster[is.na(kataster$standort),])
+```
+
+```{r, fig.align='center', out.width='1000px', message=FALSE}
+bb <- c(9.08, 47.65, 9.22, 47.75)
+map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+ggmap(map) +
+    geom_point(data=kataster %>% filter(!is.na(y) ), aes(x=x, y=y), color='green', size=0.25) +
+    labs(title='Bäume in Konstanz (Standorte)') +
+    theme_void() +
+    theme(legend.position="bottom") 
+```
+
+
+## O<sub>2</sub> Produktion
+
+```{r}
+to_centimeter <- function(inch) return(inch*2.54)
+```
+
+```{r}
+# O2 Produktion in Kilogram pro Jahr.
+dfs = list(
+    # Novak (2007)
+    kataster %>% 
+        filter(stammumfang/pi <= to_centimeter(3)) %>%
+        mutate(o2_produktion = 2.9),
+
+    #
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(3)) & (stammumfang/pi < to_centimeter(9))) %>%
+        mutate(o2_produktion = (2.9 + 22.6)/2),
+
+    # Novak (2007)
+    kataster %>% 
+        filter((stammumfang/pi >= to_centimeter(9)) & (stammumfang/pi <= to_centimeter(12))) %>%
+        mutate(o2_produktion = 22.6),
+    
+    #
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(12)) & (stammumfang/pi < to_centimeter(18))) %>%
+        mutate(o2_produktion = (22.6 + 45.6)/2),
+    
+    # Novak (2007)
+    kataster %>% 
+        filter((stammumfang/pi >= to_centimeter(18)) & (stammumfang/pi <= to_centimeter(21) )) %>%
+        mutate(o2_produktion = 45.6),
+
+    # 
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(21)) &  (stammumfang/pi < to_centimeter(27))) %>%
+        mutate(o2_produktion = (45.6 + 91.1)/2),
+    
+    # Novak (2007)
+    kataster %>% 
+        filter((stammumfang/pi >= to_centimeter(27)) & (stammumfang/pi <= to_centimeter(30) )) %>%
+        mutate(o2_produktion = 91.1),
+    
+    # Novak (2007)
+    kataster %>% filter(stammumfang/pi > to_centimeter(30)) %>%
+        mutate(o2_produktion = 110.3)
+)
+kataster <- do.call('rbind', dfs)
+```
+
+O<sub>2</sub> Produktion in Tonnen pro Jahr für Konstanz
+```{r}
+sum(kataster$o2_produktion)/1000
+```
+
+```{r, fig.align='center', out.width='1000px', message=FALSE}
+bb <- c(9.08, 47.65, 9.22, 47.75)
+map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+data <- kataster %>% 
+    filter(!is.na(o2_produktion)) %>%
+    filter(x >= bb[1] & x <= bb[3]) %>%
+    filter(y >= bb[2] & y <= bb[4]) %>%
+    arrange(o2_produktion)
+size <- data$o2_produktion / 75
+ggmap(map) +
+    geom_point(data=data, aes(x=x, y=y, color=o2_produktion), size=size, alpha=0.25) +
+    labs(title=expression('Bäume in Konstanz ('*O[2]*' Produktion)')) +
+    theme_void() +
+    theme(legend.position="bottom") +
+    scale_color_continuous(name=expression(Kilogramm*' '*O[2]*'  pro Jahr'), low = "yellow", high = "green")
+```
+
+## CO<sub>2</sub> Aufnahme
+
+```{r}
+to_kilogram <- function(lbs) return(lbs*0.453592)
+```
+
+```{r}
+# CO2 Aufnnahme in Kilogram pro Jahr.
+dfs = list(
+    # Novak (2007a)
+    kataster %>% 
+        filter(stammumfang/pi <= to_centimeter(3)) %>%
+        mutate(co2_aufnahme = to_kilogram(0.201)),
+
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(3)) & (stammumfang/pi <= to_centimeter(6))) %>%
+        mutate(co2_aufnahme = to_kilogram(5.7)),
+
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(6)) & (stammumfang/pi <= to_centimeter(9))) %>%
+        mutate(co2_aufnahme = to_kilogram(10.3)),
+    
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(9)) & (stammumfang/pi <= to_centimeter(12))) %>%
+        mutate(co2_aufnahme = to_kilogram(16.8)),
+    
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(12)) & (stammumfang/pi <= to_centimeter(15) )) %>%
+        mutate(co2_aufnahme = to_kilogram(21.2)),
+
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(15)) &  (stammumfang/pi <= to_centimeter(18))) %>%
+        mutate(co2_aufnahme = to_kilogram(31.4)),
+    
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(18)) & (stammumfang/pi <= to_centimeter(21) )) %>%
+        mutate(co2_aufnahme = 42.7),
+
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(21)) & (stammumfang/pi <= to_centimeter(24) )) %>%
+        mutate(co2_aufnahme = 45.6),
+
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(24)) & (stammumfang/pi <= to_centimeter(27) )) %>%
+        mutate(co2_aufnahme = 64.1),
+
+    # Novak (2007a)
+    kataster %>% 
+        filter((stammumfang/pi > to_centimeter(27)) & (stammumfang/pi <= to_centimeter(30) )) %>%
+        mutate(co2_aufnahme = 65.3),
+    
+    # Novak (2007a)
+    kataster %>% filter(stammumfang/pi > to_centimeter(30)) %>%
+        mutate(co2_aufnahme = 96.9)
+)
+kataster <- do.call('rbind', dfs)
+```
+
+CO<sub>2</sub> Aufnahme in Tonnen pro Jahr für Konstanz
+```{r}
+sum(kataster$co2_aufnahme)/1000
+```
+
+```{r, fig.align='center', out.width='1000px', message=FALSE}
+bb <- c(9.08, 47.65, 9.22, 47.75)
+map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+data <- kataster %>% 
+    filter(!is.na(co2_aufnahme)) %>%
+    filter(x >= bb[1] & x <= bb[3]) %>%
+    filter(y >= bb[2] & y <= bb[4]) %>%
+    arrange(co2_aufnahme)
+size <- data$co2_aufnahme / 75
+ggmap(map) +
+    geom_point(data=data, aes(x=x, y=y, color=co2_aufnahme), size=size, alpha=0.25) +
+    labs(title=expression('Bäume in Konstanz ('*CO[2]*' Aufnahme)')) +
+    theme_void() +
+    theme(legend.position="bottom") +
+    scale_color_continuous(name=expression(Kilogramm*' '*CO[2]*'  pro Jahr'), low = "yellow", high = "green")
+```
+
+## Zusammenfassung
+
+Ermöglicht wurde das ganze im Rahmen HACK AND HARVEST Hackathon 2021 mit:
+1. Offene Daten ([Baumkataster der Stadt Konstanz](https://offenedaten-konstanz.de/comment/2445))
+1. Freier Zugriff auf Forschungsergebnisse (siehe Literatur)
+
+## Literatur
+
+Nowak, David J.; Hoehn, Robert E. III, Crane, Daniel E.; Stevens, Jack C.; Walton, Jeffrey T. 2007a. Assessing urban forest effects and values, New York City’s urban forest. Resour. Bull. NRS-9. Newtown Square, PA: U.S. Department of Agriculture, Forest Service, Northern Research Station. 22 p. Heruntergeladen am 16.04.2021 von [hier](https://www.nrs.fs.fed.us/pubs/rb/rb_nrs009.pdf)
+
+Nowak, David J.; Crane, Daniel E.; Oxygen production by urban trees in the United States; 2007b; Arboriculture & Urban Forestry 33(3); Heruntergeladen am 16.04.2021 von [hier](https://www.researchgate.net/publication/228633757_Oxygen_production_by_urban_trees_in_the_United_States)
