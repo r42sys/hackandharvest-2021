@@ -348,7 +348,7 @@ ggmap(map) +
 
 #### Höhe
 
-Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$hoehe),])` Einträge ohnen einen gültigen Wert für die Höhe.
+Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$hoehe),])` Einträge ohne einen gültigen Wert für die Höhe.
 
 
 ```{r, fig.align='center', out.width='800px'}
@@ -394,7 +394,7 @@ ggmap(map) +
 
 #### Kronendurchmesser
 
-Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$kronendurchmesser),])` Einträge ohnen einen gültigen Wert für den Kronendurchmesser.
+Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$kronendurchmesser),])` Einträge ohne einen gültigen Wert für den Kronendurchmesser.
 
 ```{r, , fig.align='center', out.width='800px'}
 ggplot(kataster %>% filter(!is.na(kronendurchmesser))) +
@@ -438,6 +438,24 @@ ggmap(map) +
 
 #### Standort
 
+Der Standort mit den mit Abstand meisten Bäumen ist der Hauptfriedhof. Dort lebt es sich offensichtöich am gesündesten. Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$standort),])` Einträge ohne einen gültigen Wert für den Standort.
+
+
+```{r, fig.align='center', out.width='800px'}
+N = 75
+data <- kataster %>%
+  filter(!is.na(name_de)) %>%
+  group_by(standort) %>%
+  summarize(n = n()) %>%
+  filter(n > N) %>%
+  arrange(desc(n))
+ggplot(data) +
+    geom_bar(aes(x=reorder(standort, -n), y=n), stat = "identity") +
+    labs(title=paste0('Bäume der Stadt Konstanz (Standort), Anzahl > ', N), x='Standort', y='Anzahl Bäume') +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
 ```{r}
 kataster %>%
     filter(!is.na(standort)) %>%
@@ -449,13 +467,10 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
+**Tabelle: Verteilung der Standorte der Bäume der Stadt Konstanz, sortiert nach Anzahl der Bäume des Standorts.**
 
-Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für den Standort
-```{r}
-nrow(kataster[is.na(kataster$standort),])
-```
 
-```{r, fig.align='center', out.width='1000px', message=FALSE}
+```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.08, 47.65, 9.22, 47.75)
 map <- get_stamenmap(bb, maptype="terrain", zoom=14)
 ggmap(map) +
@@ -464,6 +479,7 @@ ggmap(map) +
     theme_void() +
     theme(legend.position="bottom") 
 ```
+**Karte: Verteilung der Bäume der Stadt Konstanz.**
 
 
 #### O<sub>2</sub> Produktion
