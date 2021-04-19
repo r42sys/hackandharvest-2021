@@ -232,6 +232,9 @@ Das Baumkataster der Stadt Konstanzer enthält in Summe `r nrow(kataster)` Bäum
 
 #### Gattungen
 
+Das Baumkataster der Stadt Konstanzer enthält `r length(unique(kataster[!is.na(kataster$gattung),'gattung']))` verschiedene Gattungen - `r nrow(kataster[is.na(kataster$gattung),])` Einträge haben hier keinen gültigen Wert.
+
+
 ```{r, fig.align='center', out.width='800px'}
 N = 50
 data <- kataster %>%
@@ -263,10 +266,10 @@ kataster %>%
 **Tabelle: Verteilung der Gattungen der Bäume der Stadt Konstanz sortiert nach Anzahl der Bäume pro Gattung.**
 
 
-Das Baumkataster der Stadt Konstanzer enthält `r length(unique(kataster[!is.na(kataster$gattung),'gattung']))` verschiedene Gattungen - `r nrow(kataster[is.na(kataster$gattung),])` Einträge haben hier keinen gültigen Wert.
-
-
 #### Arten
+
+Das Baumkataster der Stadt Konstanzer enthält `r length(unique(kataster[!is.na(kataster$name_de),'name_de']))` verschiedene Arten - `r nrow(kataster[is.na(kataster$name_de),])` Einträge haben hier keinen gültigen Wert.
+
 
 ```{r, fig.align='center', out.width='800px'}
 N = 100
@@ -298,10 +301,10 @@ kataster %>%
 **Tabelle: Verteilung der Arten der Bäume der Stadt Konstanz sortiert nach Anzahl der Bäume pro Art.**
 
 
-Das Baumkataster der Stadt Konstanzer enthält `r length(unique(kataster[!is.na(kataster$name_de),'name_de']))` verschiedene Arten - `r nrow(kataster[is.na(kataster$name_de),])` Einträge haben hier keinen gültigen Wert.
-
-
 #### Stammumfang
+
+Das Baumkataster der Stadt Konstanz enthält `r nrow(kataster[is.na(kataster$stammumfang),])` Bäume ohne einen gültigen Wert für den Stammumfang.
+
 
 ```{r, fig.align='center', out.width='800px'}
 ggplot(kataster %>% filter(!is.na(stammumfang))) +
@@ -324,8 +327,6 @@ kataster %>%
 ```
 **Tabelle: Verteilung des Stammumfang der Bäume der Stadt Konstanz, sortiert nach Stammumfang.**
 
-Das Baumkataster der Stadt Konstanz enthält `r nrow(kataster[is.na(kataster$stammumfang),])` Bäume ohne einen gültigen Wert für den Stammumfang.
-
 ```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.12, 47.65, 9.22, 47.70)
 map <- get_stamenmap(bb, maptype="terrain", zoom=15)
@@ -346,6 +347,9 @@ ggmap(map) +
 
 
 #### Höhe
+
+Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$hoehe),])` Einträge ohnen einen gültigen Wert für die Höhe.
+
 
 ```{r, fig.align='center', out.width='800px'}
 ggplot(kataster %>% filter(!is.na(hoehe))) +
@@ -369,9 +373,6 @@ kataster %>%
 **Tabelle: Verteilung der Höhe der Bäume der Stadt Konstanz, sortiert nach Höhe**
 
 
-Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$hoehe),])` Einträge ohnen einen gültigen Wert für die Höhe.
-
-
 ```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.12, 47.65, 9.22, 47.70)
 map <- get_stamenmap(bb, maptype="terrain", zoom=15)
@@ -393,12 +394,16 @@ ggmap(map) +
 
 #### Kronendurchmesser
 
-```{r}
+Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$kronendurchmesser),])` Einträge ohnen einen gültigen Wert für den Kronendurchmesser.
+
+```{r, , fig.align='center', out.width='800px'}
 ggplot(kataster %>% filter(!is.na(kronendurchmesser))) +
     geom_histogram(aes(x=kronendurchmesser), binwidth=1) +
     labs(title='Bäume der Stadt Konstanz (Kronendurchmesser)', x='Kronendurchmesser [m]', y='Anzahl Bäume') +
     theme_bw()
 ```
+**Abbildung: Verteilung de Kronendurchmessers der Bäume der Stadt Konstanz.**
+
 ```{r}
 kataster %>%
     filter(!is.na(kronendurchmesser)) %>%
@@ -410,13 +415,9 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
+**Tabelle: Verteilung des Kronendurchmessers der Bäume der Stadt Konstanz, sortiert nach Kronendurchmesser.**
 
-Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für den Kronendurchmesser
-```{r}
-nrow(kataster[is.na(kataster$kronendurchmesser),])
-```
-
-```{r, fig.align='center', out.width='1000px', message=FALSE}
+```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.12, 47.65, 9.22, 47.70)
 map <- get_stamenmap(bb, maptype="terrain", zoom=15)
 data <- kataster %>% 
@@ -432,6 +433,8 @@ ggmap(map) +
     theme(legend.position="bottom") +
     scale_color_continuous(name='Kronendurchmesser in Meter')
 ```
+**Karte: Verteilung der Bäume der Stadt Konstanz im Stadtgebiet, hervorgehoben ist der Kromnendurchmesser der eingezeichneten Bäume.**
+
 
 #### Standort
 
