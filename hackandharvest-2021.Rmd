@@ -11,6 +11,9 @@ output:
     df_print: paged
 ---
 
+Ziel dieses 24 Stunden Mikro-Forschungsprojekt, im Rahmen des [HACK AND HARVEST](https://www.hackandharvest.farm) 2021, war die Berechnung der elementaren CO<sub>2</sub>-Bilanz für Konstanz, die Differenz von CO<sub>2</sub>-Erzeugung von Konstanzer:innen durch Atmung auf der einen und der CO<sub>2</sub>-Aufnahme der konstanzer Vegetation auf der anderen Seite. Beschränkt habe ich mich hier, aufgrund der Datenlage, auf erwachsene Konstanzer einerseits und Bäume der Stadt Konstanz andererseits. 
+
+
 ```{r}
 Sys.setlocale("LC_ALL","de_DE")
 ```
@@ -29,7 +32,9 @@ library(osmdata)
 library(tidyr)
 ```
 
-## Vorverarbeitung
+## Explorative Datenanalyse
+
+### Bäume der Sadt Konstanz
 
 ```{r}
 raw <- read.csv('data/KN_Baumkataster_2020.csv', strip.white=TRUE) %>%
@@ -222,26 +227,27 @@ kataster <- raw %>%
     mutate_if(is.character, as.factor)
 ```
 
-**Anzahl der Bäume im Kataster der Stadt Konstanz**
-```{r}
-nrow(kataster)
+Das Baumkataster der Stadt Konstanzer enthält in Summe `r nrow(kataster)` Bäume.
+
+
+#### Gattungen
+
+```{r, fig.align='center', out.width='800px'}
+N = 50
+data <- kataster %>%
+  filter(!is.na(gattung)) %>%
+  group_by(gattung) %>%
+  summarize(n = n()) %>%
+  filter(n > N) %>%
+  arrange(desc(n))
+ggplot(data) +
+    geom_bar(aes(x=reorder(gattung, -n), y=n), stat = "identity") +
+    labs(title=paste0('Bäume der Stadt Konstanz (Gattungen), Anzahl > ', N), x='Gattung', y='Anzahl Bäume') +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
+**Abbildung** Gattung der Bäume der Stadt Konstanz für Gattungen mit mehr als `r N` Bäumen.
 
-## EDA
-
-### Bäume
-
-#### Gattung
-
-```{r, fig.align='center', out.width='1000px'}
-kataster %>%
-    filter(!is.na(gattung)) %>%
-    ggplot() +
-        geom_bar(aes(x=reorder(gattung, -table(gattung)[gattung]))) +
-        labs(title='Bäume der Stadt Konstanz (Gattungen)', x='Gattung', y='Anzahl Bäume') +
-        theme_bw() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-```
 
 ```{r}
 kataster %>%
@@ -254,16 +260,10 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
+**Tabelle** Gattung der Bäume der Stadt Konstanz sortiert nach Anzahl der Bäume.
 
-**Anzahl der Gattungen der Bäume der Stadt Konstanz**
-```{r}
-length(unique(kataster[!is.na(kataster$gattung),'gattung']))
-```
 
-Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für die Gattung
-```{r}
-nrow(kataster[is.na(kataster$gattung),])
-```
+Das Baumkataster der Stadt Konstanzer enthält `r length(unique(kataster[!is.na(kataster$gattung),'gattung']))` verschiedene Gattungen - `r nrow(kataster[is.na(kataster$gattung),])` Einträge haben hier keinen gültigen Wert.
 
 
 #### Arten
