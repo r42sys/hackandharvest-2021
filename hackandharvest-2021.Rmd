@@ -20,6 +20,7 @@ rm(list=ls())
 ```
 
 ```{r, message=FALSE, warning=FALSE}
+library(forcats)
 library(ggplot2)
 library(ggmap)
 library(dplyr)
@@ -221,7 +222,7 @@ kataster <- raw %>%
     mutate_if(is.character, as.factor)
 ```
 
-Anzahl der Bäume im Kataster
+**Anzahl der Bäume im Kataster der Stadt Konstanz**
 ```{r}
 nrow(kataster)
 ```
@@ -237,7 +238,7 @@ kataster %>%
     filter(!is.na(gattung)) %>%
     ggplot() +
         geom_bar(aes(x=reorder(gattung, -table(gattung)[gattung]))) +
-        labs(title='Verteilung der Gattungen', x='Gattung', y='Anzahl Bäume') +
+        labs(title='Bäume der Stadt Konstanz (Gattungen)', x='Gattung', y='Anzahl Bäume') +
         theme_bw() +
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
@@ -253,12 +254,13 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
-Anzahl der unterschiedlichen Gattungen
+
+**Anzahl der Gattungen der Bäume der Stadt Konstanz**
 ```{r}
 length(unique(kataster[!is.na(kataster$gattung),'gattung']))
 ```
 
-Anzahl der Bäume ohne einen gültigen Wert für die Gattung
+Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für die Gattung
 ```{r}
 nrow(kataster[is.na(kataster$gattung),])
 ```
@@ -277,22 +279,23 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
-Anzahl der unterschiedlichen Arten
+
+**Anzahl der Arten Bäume der Stadt Konstanz**
 ```{r}
 length(unique(kataster[!is.na(kataster$name_de),'name_de']))
 ```
 
-Anzahl der Bäume ohne einen gültigen Wert für die Art
+Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für die Art
 ```{r}
 nrow(kataster[is.na(kataster$name_de),])
 ```
 
-#### Stammmumfang
+#### Stammumfang
 
 ```{r}
 ggplot(kataster %>% filter(!is.na(stammumfang))) +
     geom_histogram(aes(x=stammumfang), binwidth=25) +
-    labs(title='Verteilung des Stammmumfang', x='Stammumfang [cm]', y='Anzahl Bäume') +
+    labs(title='Bäume der Stadt Konstanz (Stammumfang)', x='Stammumfang [cm]', y='Anzahl Bäume') +
     theme_bw()
 ```
 ```{r}
@@ -306,7 +309,8 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
-Anzahl der Bäume ohne einen gültigen Wert für den Stammumfang
+
+Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für den Stammumfang
 ```{r}
 nrow(kataster[is.na(kataster$stammumfang),])
 ```
@@ -322,7 +326,7 @@ data <- kataster %>%
 size <- data$stammumfang / 250
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=stammumfang), size=size, alpha=0.5) +
-    labs(title='Bäume in Konstanz (Stammumfang)') +
+    labs(title='Bäume der Stadt Konstanz (Stammumfang)') +
     theme_void() +
     theme(legend.position="bottom") +
     scale_color_continuous(name='Stammumfang in Zentimeter')
@@ -333,7 +337,7 @@ ggmap(map) +
 ```{r}
 ggplot(kataster %>% filter(!is.na(hoehe))) +
     geom_histogram(aes(x=hoehe), binwidth=1) +
-    labs(title='Verteilung der Baumhöhe', x='Baumhöhe [m]', y='Anzahl Bäume') +
+    labs(title='Bäume der Stadt Konstanz (Höhe)', x='Höhe [m]', y='Anzahl Bäume') +
     theme_bw()
 ```
 ```{r}
@@ -347,7 +351,8 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
-Anzahl der Bäume ohne einen gültigen Wert für die Höhe
+
+Anzahl der Bäume der STadt Konstanz ohne einen gültigen Wert für die Höhe
 ```{r}
 nrow(kataster[is.na(kataster$hoehe),])
 ```
@@ -363,7 +368,7 @@ data <- kataster %>%
 size <- data$hoehe / 10
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=hoehe), size=size, alpha=0.5) +
-    labs(title='Bäume in Konstanz (Höhe)') +
+    labs(title='Bäume der Stadt Konstanz (Höhe)') +
     theme_void() +
     theme(legend.position="bottom") +
     scale_color_continuous(name='Höhe in Meter')
@@ -374,7 +379,7 @@ ggmap(map) +
 ```{r}
 ggplot(kataster %>% filter(!is.na(kronendurchmesser))) +
     geom_histogram(aes(x=kronendurchmesser), binwidth=1) +
-    labs(title='Verteilung der Kronendurchmesser', x='Kronendurchmesser [m]', y='Anzahl Bäume') +
+    labs(title='Bäume der Stadt Konstanz (Kronendurchmesser)', x='Kronendurchmesser [m]', y='Anzahl Bäume') +
     theme_bw()
 ```
 ```{r}
@@ -388,7 +393,8 @@ kataster %>%
     kable_styling("striped", full_width = F) %>%
     scroll_box(height = "300px")
 ```
-Anzahl der Bäume ohne einen gültigen Wert für den Kronendurchmesser
+
+Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für den Kronendurchmesser
 ```{r}
 nrow(kataster[is.na(kataster$kronendurchmesser),])
 ```
@@ -404,10 +410,10 @@ data <- kataster %>%
 size <- data$kronendurchmesser / 10
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=kronendurchmesser), size=size, alpha=0.5) +
-    labs(title='Bäume in Konstanz (Kronendurchmesser)') +
+    labs(title='Bäume der Stadt Konstanz (Kronendurchmesser)') +
     theme_void() +
     theme(legend.position="bottom") +
-    scale_color_continuous(name='Kronendurchmesser')
+    scale_color_continuous(name='Kronendurchmesser in Meter')
 ```
 
 #### Standort
@@ -424,7 +430,7 @@ kataster %>%
     scroll_box(height = "300px")
 ```
 
-Anzahl der Bäume ohne einen gültigen Wert für den Standort
+Anzahl der Bäume der Stadt Konstanz ohne einen gültigen Wert für den Standort
 ```{r}
 nrow(kataster[is.na(kataster$standort),])
 ```
@@ -433,14 +439,14 @@ nrow(kataster[is.na(kataster$standort),])
 bb <- c(9.08, 47.65, 9.22, 47.75)
 map <- get_stamenmap(bb, maptype="terrain", zoom=14)
 ggmap(map) +
-    geom_point(data=kataster %>% filter(!is.na(y) ), aes(x=x, y=y), color='green', size=0.25) +
-    labs(title='Bäume in Konstanz (Standorte)') +
+    geom_point(data=kataster %>% filter(!is.na(y) ), aes(x=x, y=y), size=0.25, alpha=0.25) +
+    labs(title='Bäume der Stadt Konstanz (Standorte)') +
     theme_void() +
     theme(legend.position="bottom") 
 ```
 
 
-## O<sub>2</sub> Produktion
+#### O<sub>2</sub> Produktion
 
 ```{r}
 to_centimeter <- function(inch) return(inch*2.54)
@@ -491,9 +497,10 @@ dfs = list(
 kataster <- do.call('rbind', dfs)
 ```
 
-O<sub>2</sub> Produktion in Tonnen pro Jahr für Konstanz
+**O<sub>2</sub>-Produktion der Bäume der Stadt Konstanz in Tonnen pro Jahr**
 ```{r}
-sum(kataster$o2_produktion)/1000
+o2_produktion = sum(kataster$o2_produktion)/1000
+o2_produktion
 ```
 
 ```{r, fig.align='center', out.width='1000px', message=FALSE}
@@ -507,20 +514,20 @@ data <- kataster %>%
 size <- data$o2_produktion / 75
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=o2_produktion), size=size, alpha=0.25) +
-    labs(title=expression('Bäume in Konstanz ('*O[2]*' Produktion)')) +
+    labs(title=expression('Bäume der Stadt Konstanz ('*O[2]*'-Produktion)')) +
     theme_void() +
     theme(legend.position="bottom") +
-    scale_color_continuous(name=expression(Kilogramm*' '*O[2]*'  pro Jahr'), low = "yellow", high = "green")
+    scale_color_continuous(name=expression('Kilogramm '*O[2]*' pro Jahr'), low = "black", high = "green")
 ```
 
-## CO<sub>2</sub> Aufnahme
+#### CO<sub>2</sub> Aufnahme
 
 ```{r}
 to_kilogram <- function(lbs) return(lbs*0.453592)
 ```
 
 ```{r}
-# CO2 Aufnnahme in Kilogram pro Jahr.
+# CO2 Aufnahme in Kilogram pro Jahr.
 dfs = list(
     # Novak (2007a)
     kataster %>% 
@@ -579,9 +586,10 @@ dfs = list(
 kataster <- do.call('rbind', dfs)
 ```
 
-CO<sub>2</sub> Aufnahme in Tonnen pro Jahr für Konstanz
+**CO<sub>2</sub>-Aufnahme der Bäume der Stadt Konstanz in Tonnen pro Jahr**
 ```{r}
-sum(kataster$co2_aufnahme)/1000
+co2_aufnahme = sum(kataster$co2_aufnahme)/1000
+co2_aufnahme
 ```
 
 ```{r, fig.align='center', out.width='1000px', message=FALSE}
@@ -598,17 +606,158 @@ ggmap(map) +
     labs(title=expression('Bäume in Konstanz ('*CO[2]*' Aufnahme)')) +
     theme_void() +
     theme(legend.position="bottom") +
-    scale_color_continuous(name=expression(Kilogramm*' '*CO[2]*'  pro Jahr'), low = "yellow", high = "green")
+    scale_color_continuous(name=expression('Kilogramm '*CO[2]*' pro Jahr'), low = "black", high = "green")
+```
+
+### Konstanzer
+
+```{r, warning=FALSE}
+vororte <- c('Egg', 'Dettingen', 'Dingelsdorf', 'Litzelstetten', 'Wallhausen')
+konstanzer <- read.csv("data/Einwohner_nach_Stadtviertel 2010-2019.csv", sep=";", na.strings=c('','*)')) %>%
+
+    # Fehlende Daten werden herausgefiltert.
+    filter(complete.cases(.)) %>%
+
+    # Es lebe ASCII, UTF-8 und andere Unwägbarkeiten.  
+    mutate(STADTTEIL = fct_collapse(STADTTEIL, 'Fürstenberg' = c('Fuerstenberg'))) %>%
+    mutate(STADTTEIL = fct_collapse(STADTTEIL, 'Königsbau' = c('Koenigsbau'))) %>%
+  
+    # Einige Variablenamen etwas leiser stellen.
+    rename(Stadtteil = STADTTEIL) %>%
+    rename(Stadtviertel = STADTVIERTEL) %>%
+
+    # Hurrga! Pivot Zeilen rausschmeißen.
+    filter(nchar(Stadtviertel) != 3) %>%
+    filter(Stadtteil != 'Stadt Konstanz') %>%
+    
+    # Zusätzliches Merkmal: (Pseudo-) Verwaltungseinheit.
+    mutate(Verwaltungseinheit = as.factor(ifelse(Stadtteil %in% vororte, 'Vorort', 'Stadt'))) %>%
+    
+    # Besserere Variablename (IMHO) in diesem Kontext.
+    mutate(Stichtag = as.Date(Stand_Einwohner, "%d.%m.%y")) %>%
+
+    # Unbenötigte Einwohnerdaten entfernen.
+    select(-EINW_HW_GESAMT, -EINW_HW_FRAUEN, -EINW_HW_DEUTSCH, -EINW_HW_AUSLAENDER) %>%
+    
+    # Altersklassen bilden.
+    gather(key="Altersklasse", value="Anzahl", starts_with("EINW_HW")) %>%
+    mutate(Altersklasse = factor(Altersklasse)) %>%
+    mutate(Altersklasse = fct_recode(Altersklasse, 'unter 18'='EINW_HW_unter18')) %>%
+    mutate(Altersklasse = fct_recode(Altersklasse, '18 bis unter 30'='EINW_HW_18_bis_unter_30')) %>%
+    mutate(Altersklasse = fct_recode(Altersklasse, '30 bis unter 40'='EINW_HW_30_bis_unter_40')) %>%
+    mutate(Altersklasse = fct_recode(Altersklasse, '40 bis unter 50'='EINW_HW_40_bis_unter_50')) %>%
+    mutate(Altersklasse = fct_recode(Altersklasse, '50 bis unter 60'='EINW_HW_50_bis_unter_60')) %>%
+    mutate(Altersklasse = fct_recode(Altersklasse, 'über 60'='EINW_HW_60_und_aelter')) %>%
+
+    mutate(Anzahl = as.numeric(Anzahl)) %>%
+    filter(complete.cases(.)) %>%
+    
+    group_by(Stadtteil, Verwaltungseinheit, Stichtag, Altersklasse) %>%
+    summarize(Anzahl = sum(Anzahl, na.rm=TRUE), .groups='drop')
+
+# Anordnung der Alterklassenbezeichnungen anordnen.
+konstanzer$Altersklasse = factor(konstanzer$Altersklasse,levels(konstanzer$Altersklasse)[c(6,1:5)])
+```
+
+
+```{r, out.width='1000px'}
+konstanzer %>% 
+    filter(Stichtag==as.Date('31.12.2019','%d.%m.%Y') | Stichtag==as.Date('31.12.2010','%d.%m.%Y')) %>%
+    filter(Verwaltungseinheit=='Stadt') %>%
+    mutate(Stichtag = as.factor(Stichtag)) %>%
+    ggplot() + 
+        geom_bar(aes(x=Altersklasse, y=Anzahl, fill=Stichtag), stat = "identity", position='dodge') + 
+        facet_wrap(Stadtteil~., ncol=3) +
+        coord_flip() + 
+        labs(x='Altersklasse', y='Anzahl Einwohner', title='Einwohner nach Altersklasse (Konstanz Stadt)') +
+        theme_bw() +
+        theme(legend.position="bottom")
+```
+
+```{r, out.width='1000px'}
+konstanzer %>% 
+    filter(Stichtag==as.Date('31.12.2019','%d.%m.%Y') | Stichtag==as.Date('31.12.2010','%d.%m.%Y')) %>%
+    filter(Verwaltungseinheit=='Vorort') %>%
+    mutate(Stichtag = as.factor(Stichtag)) %>%
+    ggplot() + 
+        geom_bar(aes(x=Altersklasse, y=Anzahl, fill=Stichtag), stat = "identity", position='dodge') + 
+        facet_wrap(Stadtteil~., ncol=3) +
+        coord_flip() + 
+        labs(x='Altersklasse', y='Anzahl Einwohner', title='Einwohner nach Altersklasse (Konstanz Vororte)') +
+        theme_bw() +
+        theme(legend.position="bottom")
+```
+
+Erwachsene Konstanzer im Jahr 2019
+```{r}
+erwachsene <- konstanzer %>%
+    filter(Stichtag == as.Date('31.12.2019','%d.%m.%Y')) %>%
+    filter(Altersklasse != 'unter 18')
+sum(erwachsene$Anzahl)
+```
+
+
+#### O<sub>2</sub> Verbrauch
+
+```{r}
+# O2 Verbrauch in Kilogram pro Jahr.
+# Perry 2003
+erwachsene$o2_verbrauch = erwachsene$Anzahl * 0.84 * 365
+```
+
+O<sub>2</sub>-Verbrauch der erwachsenen Konstanzer in Tonnen pro Jahr
+```{r}
+# O2 Verbrauch in Kilogram pro Jahr.
+o2_verbrauch = sum(erwachsene$o2_verbrauch)/1000
+o2_verbrauch
+```
+
+#### CO<sub>2</sub> Produktion
+
+```{r}
+# CO2 Produktion in Kilogram pro Jahr.
+# Perry 2003
+erwachsene$co2_produktion = erwachsene$Anzahl * 1.00 * 365
+```
+
+CO<sub>2</sub>-Produktion der erwachsenen Konstanzer in Tonnen pro Jahr
+```{r}
+co2_produktion = sum(erwachsene$co2_produktion)/1000 
+co2_produktion
+```
+
+## Bilanz
+
+**Elementare O<sub>2</sub> Bilanz in Tonnen pro Jahr**
+```{r}
+o2_bilanz <- o2_produktion - o2_verbrauch
+o2_bilanz
+```
+
+**Elementare CO<sub>2</sub> Bilanz in Tonnen pro Jahr**
+```{r}
+co2_bilanz = co2_produktion - co2_aufnahme
+co2_bilanz
 ```
 
 ## Zusammenfassung
 
+Die O<sub>2</sub> Bilanz ist **negativ**, dh es wird mehr Sauerstoff von den Konstanzer Einwohnern verbraucht als von den Bäumen der Stadt Konstanz hergestellt wird.
+
+Die CO<sub>2</sub> Bilanz ist **positiv**, dh es wird mehr Kohlendioxid von den Konstanzer Einwohnern erzeugt als von den Bäumen der Stadt Konstanz aufgenommen wird wird.
+
+### Shout-Out
+
 Ermöglicht wurde das ganze im Rahmen HACK AND HARVEST Hackathon 2021 mit:
-1. Offene Daten ([Baumkataster der Stadt Konstanz](https://offenedaten-konstanz.de/comment/2445))
-1. Freier Zugriff auf Forschungsergebnisse (siehe Literatur)
+
+1. Offene Daten ([Baumkataster der Stadt Konstanz](https://offenedaten-konstanz.de/dataset/baumkataster-konstanz), [Konstanzer Einwohner nach Stadvierteln 2010-2019](https://offenedaten-konstanz.de/dataset/konstanzer-einwohner-nach-stadtvierteln))
+2. Freier Zugriff auf Forschungsergebnisse (siehe Literatur)
+3. Frei erhältliche Software ([R](https://www.r-project.org), [RStudio](https://www.rstudio.com), [tidyverse](https://www.tidyverse.org), ...)
 
 ## Literatur
 
 Nowak, David J.; Hoehn, Robert E. III, Crane, Daniel E.; Stevens, Jack C.; Walton, Jeffrey T. 2007a. Assessing urban forest effects and values, New York City’s urban forest. Resour. Bull. NRS-9. Newtown Square, PA: U.S. Department of Agriculture, Forest Service, Northern Research Station. 22 p. Heruntergeladen am 16.04.2021 von [hier](https://www.nrs.fs.fed.us/pubs/rb/rb_nrs009.pdf)
 
-Nowak, David J.; Crane, Daniel E.; Oxygen production by urban trees in the United States; 2007b; Arboriculture & Urban Forestry 33(3); Heruntergeladen am 16.04.2021 von [hier](https://www.researchgate.net/publication/228633757_Oxygen_production_by_urban_trees_in_the_United_States)
+Nowak, David J.; Crane, Daniel E.; 2007b; Oxygen production by urban trees in the United States; Arboriculture & Urban Forestry 33(3); Heruntergeladen am 16.04.2021 von [hier](https://www.researchgate.net/publication/228633757_Oxygen_production_by_urban_trees_in_the_United_States)
+
+Perry, J.; LeVan, M.D.; 2003; Air Purification in Closed Environments: Overview of Spacecraft Systems. U.S. Army Natrick Soldier Center.; Heruntergeladen am 17.04.2021 von [hier](https://www.researchgate.net/profile/Jay-Perry/publication/23903409_Air_Purification_in_Closed_Environments_An_Overview_of_Spacecraft_Systems/links/54f78f510cf2ccffe9db44b4/Air-Purification-in-Closed-Environments-An-Overview-of-Spacecraft-Systems.pdf)
