@@ -5,13 +5,11 @@ author:
   name: Ralph Rogge
 date: 17. April 2021
 output:
-  html_document:
-    css: "hackandharvest-2021.css"
-    code_folding: show
-    df_print: paged
+  html_document: 
+    css: hackandharvest-2021.css
 ---
 
-Ziel dieses 24 Stunden Mikro-Forschungsprojekt, im Rahmen des [HACK AND HARVEST](https://www.hackandharvest.farm) 2021, war die Berechnung der elementaren CO<sub>2</sub>-Bilanz für Konstanz, die Differenz von CO<sub>2</sub>-Erzeugung von Konstanzer:innen durch Atmung auf der einen und der CO<sub>2</sub>-Aufnahme der konstanzer Vegetation auf der anderen Seite. Beschränkt habe ich mich hier, aufgrund der Datenlage, auf erwachsene Konstanzer einerseits und Bäume der Stadt Konstanz andererseits. 
+Ziel dieses 12 Stunden Mikro-Forschungsprojektes, im Rahmen des [HACK AND HARVEST](https://www.hackandharvest.farm) 2021, war die Berechnung der elementaren CO<sub>2</sub>-Bilanz für Konstanz, die Differenz von CO<sub>2</sub>-Erzeugung von Konstanzer:innen durch Atmung auf der einen und der CO<sub>2</sub>-Aufnahme der konstanzer Vegetation auf der anderen Seite. Beschränkt habe ich mich hier, aufgrund der Datenlage, auf erwachsene Konstanzer einerseits und Bäume der Stadt Konstanz andererseits. 
 
 
 ```{r}
@@ -48,11 +46,11 @@ raw <- read.csv('data/KN_Baumkataster_2020.csv', strip.white=TRUE) %>%
     rename(standort = location)
 ```
 
-```{r class.source = 'fold-hide'}
+```{r trim, echo=FALSE}
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 ```
 
-```{r class.source = 'fold-hide'}
+```{r, echo=FALSE}
 kataster <- raw %>%
     mutate(name_de = replace(name_de, name_de == "Amberbaum", "Amberbäume, Amberbaum")) %>%
     mutate(name_de = replace(name_de, name_de == "Apfel 'Boskoop'", "Äpfel, Apfel, 'Boskoop")) %>%
@@ -170,12 +168,6 @@ kataster <- raw %>%
     mutate(name_de = replace(name_de, name_de == "Asch-Weide", "Weiden, Asch-Weide")) %>%    
     mutate(name_de = replace(name_de, name_de == "Flesenbirne, kupferrote Felsenbirne", "Felsenbirnen, Kupferrote Felsenbirne")) %>%    
     mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
-    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
-    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
-    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
-    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
-    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
-    mutate(name_de = replace(name_de, name_de == "Zwetschge", "Prunus, Pflaume")) %>%    
 
     separate(name_de, into=c('gattung','name_de'), sep=',', extra='merge', fill='left') %>%
 
@@ -232,110 +224,152 @@ Das Baumkataster der Stadt Konstanzer enthält in Summe `r nrow(kataster)` Bäum
 
 #### Gattungen
 
-Das Baumkataster der Stadt Konstanzer enthält `r length(unique(kataster[!is.na(kataster$gattung),'gattung']))` verschiedene Gattungen - `r nrow(kataster[is.na(kataster$gattung),])` Einträge haben hier keinen gültigen Wert.
+Das Baumkataster der Stadt Konstanz enthält `r length(unique(kataster[!is.na(kataster$gattung),'gattung']))` verschiedene Gattungen, `r nrow(kataster[is.na(kataster$gattung),])` Einträge haben hier keinen gültigen Wert.
 
 
-```{r, fig.align='center', out.width='800px'}
-N = 50
+```{r, out.width='800px'}
+N <- 50
+
 data <- kataster %>%
   filter(!is.na(gattung)) %>%
   group_by(gattung) %>%
   summarize(n = n()) %>%
   filter(n > N) %>%
   arrange(desc(n))
+
 ggplot(data) +
     geom_bar(aes(x=reorder(gattung, -n), y=n), stat = "identity") +
     labs(title=paste0('Bäume der Stadt Konstanz (Gattungen), Anzahl > ', N), x='Gattung', y='Anzahl Bäume') +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
-**Abbildung: Verteilung der Gattungen der Bäume der Stadt Konstanz für Gattungen mit mehr als `r N` Bäumen.**
 
+**Abbildung: Verteilung der Bäume der Stadt Konstanz für Gattungen mit mehr als `r N` Bäumen.**
+
+```{r, out.width='800px', message=FALSE}
+N <- 10
+
+#bb <- c(9.08, 47.65, 9.22, 47.75)
+#map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+
+bb <- c(9.12, 47.65, 9.22, 47.70)
+map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+
+df <- kataster %>% 
+    filter(!is.na(gattung)) %>%
+    filter(x >= bb[1] & x <= bb[3]) %>%
+    filter(y >= bb[2] & y <= bb[4]) %>%
+    group_by(gattung) %>%
+    summarize(n=n()) %>%
+    arrange(desc(n)) %>%
+    top_n(N)
+
+data <- kataster %>% 
+  filter(gattung %in% df$gattung) %>%
+  filter(x >= bb[1] & x <= bb[3]) %>%
+  filter(y >= bb[2] & y <= bb[4])
+
+ggmap(map) +
+    geom_point(data=data, aes(x=x, y=y, color=gattung), size=0.5, alpha=0.25) +
+    labs(title=paste0('Bäume der Stadt Konstanz (Gattungen, Top ', N, ')')) +
+    theme_void() +
+    theme(legend.position="bottom") +
+    scale_color_discrete(name='Gattung') +
+    guides(color=guide_legend(override.aes=list(alpha=1, size=1))) 
+```
+
+**Abbildung: Verteilung der Bäume der Stadt Konstanz über das Stadtgebiet für Gattungen mit mehr als `r N` Bäumen.**
 
 ```{r}
-kataster %>%
-    filter(!is.na(gattung)) %>%
-    group_by(gattung) %>%
-    summarize(n = n()) %>%
-    arrange(desc(n)) %>%
-    select(Gattung=gattung, 'Anzahl Bäume'=n) %>%
-    kable %>%
-    kable_styling("striped", full_width = F) %>%
-    scroll_box(height = "300px")
+df <- kataster %>% filter(!is.na(stammumfang)) %>% filter(!is.na(hoehe))
+V <- (df$stammumfang / 100)**2 / (4*pi) * df$hoehe # m^3
+m <- V * 600 # kg
+C <- m / 2
+sum(C)/1000
 ```
-**Tabelle: Verteilung der Gattungen der Bäume der Stadt Konstanz sortiert nach Anzahl der Bäume pro Gattung.**
-
 
 #### Arten
 
-Das Baumkataster der Stadt Konstanzer enthält `r length(unique(kataster[!is.na(kataster$name_de),'name_de']))` verschiedene Arten - `r nrow(kataster[is.na(kataster$name_de),])` Einträge haben hier keinen gültigen Wert.
+Das Baumkataster der Stadt Konstanz enthält `r length(unique(kataster[!is.na(kataster$name_de),'name_de']))` verschiedene Arten, `r nrow(kataster[is.na(kataster$name_de),])` Einträge haben hier keinen gültigen Wert.
 
+```{r, out.width='800px'}
+N <- 100
 
-```{r, fig.align='center', out.width='800px'}
-N = 100
 data <- kataster %>%
   filter(!is.na(name_de)) %>%
   group_by(name_de) %>%
   summarize(n = n()) %>%
   filter(n > N) %>%
   arrange(desc(n))
+
 ggplot(data) +
     geom_bar(aes(x=reorder(name_de, -n), y=n), stat = "identity") +
     labs(title=paste0('Bäume der Stadt Konstanz (Arten), Anzahl > ', N), x='Art', y='Anzahl Bäume') +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
-**Abbildung: Verteilung der Arten der Bäume der Stadt Konstanz für Arten mit mehr als `r N` Bäumen.**
 
-```{r}
-kataster %>%
-    filter(!is.na(name_de)) %>%
+**Abbildung: Verteilung der Bäume der Stadt Konstanz für Arten mit mehr als `r N` Bäumen.**
+
+```{r, out.width='800px', message=FALSE}
+N <- 10
+
+#bb <- c(9.08, 47.65, 9.22, 47.75)
+#map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+
+bb <- c(9.12, 47.65, 9.22, 47.70)
+map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+
+df <- kataster %>% 
+    filter(!is.na(gattung)) %>%
+    filter(x >= bb[1] & x <= bb[3]) %>%
+    filter(y >= bb[2] & y <= bb[4]) %>%
     group_by(name_de) %>%
-    summarize(n = n()) %>%
+    summarize(n=n()) %>%
     arrange(desc(n)) %>%
-    select(Art=name_de, 'Anzahl Bäume'=n) %>%
-    kable %>%
-    kable_styling("striped", full_width = F) %>%
-    scroll_box(height = "300px")
-```
-**Tabelle: Verteilung der Arten der Bäume der Stadt Konstanz sortiert nach Anzahl der Bäume pro Art.**
+    top_n(N)
 
+data <- kataster %>% 
+  filter(name_de %in% df$name_de) %>%
+  filter(x >= bb[1] & x <= bb[3]) %>%
+  filter(y >= bb[2] & y <= bb[4])
+
+ggmap(map) +
+    geom_point(data=data, aes(x=x, y=y, color=name_de), size=0.5, alpha=0.25) +
+    labs(title=paste0('Bäume der Stadt Konstanz (Art, Top ', N, ')')) +
+    theme_void() +
+    theme(legend.position="bottom") +
+    scale_color_discrete(name='Art') +
+    guides(color=guide_legend(override.aes=list(alpha=1, size=1))) 
+```
+
+**Abbildung: Verteilung der Bäume der Stadt Konstanz für Arten mit mehr als `r N` Bäumen.**
 
 #### Stammumfang
 
 Das Baumkataster der Stadt Konstanz enthält `r nrow(kataster[is.na(kataster$stammumfang),])` Bäume ohne einen gültigen Wert für den Stammumfang.
 
 
-```{r, fig.align='center', out.width='800px'}
+```{r, out.width='800px'}
 ggplot(kataster %>% filter(!is.na(stammumfang))) +
     geom_histogram(aes(x=stammumfang), binwidth=25) +
     labs(title='Bäume der Stadt Konstanz (Stammumfang)', x='Stammumfang [cm]', y='Anzahl Bäume') +
     theme_bw()
 ```
+
 **Abbildung: Verteilung des Stammumfangs der Bäume der Stadt Konstanz.**
 
-```{r}
-kataster %>%
-    filter(!is.na(stammumfang)) %>%
-    group_by(stammumfang) %>%
-    summarize(n = n()) %>%
-    arrange(desc(stammumfang)) %>%
-    select(Stammumfang=stammumfang, 'Anzahl Bäume'=n) %>%
-    kable %>%
-    kable_styling("striped", full_width = F) %>%
-    scroll_box(height = "300px")
-```
-**Tabelle: Verteilung des Stammumfang der Bäume der Stadt Konstanz, sortiert nach Stammumfang.**
-
-```{r, fig.align='center', out.width='800px', message=FALSE}
+```{r, out.width='800px', message=FALSE}
 bb <- c(9.12, 47.65, 9.22, 47.70)
 map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+
 data <- kataster %>% 
     filter(!is.na(stammumfang)) %>%
     filter(x >= bb[1] & x <= bb[3]) %>%
     filter(y >= bb[2] & y <= bb[4]) %>%
     arrange(stammumfang)
 size <- data$stammumfang / 250
+
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=stammumfang), size=size, alpha=0.5) +
     labs(title='Bäume der Stadt Konstanz (Stammumfang)') +
@@ -343,45 +377,33 @@ ggmap(map) +
     theme(legend.position="bottom") +
     scale_color_continuous(name='Stammumfang in Zentimeter')
 ```
-**Karte: Verteilung der Bäume der Stadt Konstanz im Stadtgebiet, hervorgehoben ist der Stammumfang der eingezeichneten Bäume.**
 
+**Abbildung: Verteilung der Bäume der Stadt Konstanz über das Stadtgebiet, hervorgehoben ist der Stammumfang der eingezeichneten Bäume.**
 
 #### Höhe
 
 Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$hoehe),])` Einträge ohne einen gültigen Wert für die Höhe.
 
-
-```{r, fig.align='center', out.width='800px'}
+```{r, out.width='800px'}
 ggplot(kataster %>% filter(!is.na(hoehe))) +
     geom_histogram(aes(x=hoehe), binwidth=1) +
     labs(title='Bäume der Stadt Konstanz (Höhe)', x='Höhe [m]', y='Anzahl Bäume') +
     theme_bw()
 ```
+
 **Abbildung: Verteilung der Höhe der Bäume der Stadt Konstanz.**
-
-```{r}
-kataster %>%
-    filter(!is.na(hoehe)) %>%
-    group_by(hoehe) %>%
-    summarize(n = n()) %>%
-    arrange(desc(hoehe)) %>%
-    select(Höhe=hoehe, 'Anzahl Bäume'=n) %>%
-    kable %>%
-    kable_styling("striped", full_width = F) %>%
-    scroll_box(height = "300px")
-```
-**Tabelle: Verteilung der Höhe der Bäume der Stadt Konstanz, sortiert nach Höhe**
-
 
 ```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.12, 47.65, 9.22, 47.70)
 map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+
 data <- kataster %>% 
     filter(!is.na(hoehe)) %>%
     filter(x >= bb[1] & x <= bb[3]) %>%
     filter(y >= bb[2] & y <= bb[4]) %>%
     arrange(hoehe)
 size <- data$hoehe / 10
+
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=hoehe), size=size, alpha=0.5) +
     labs(title='Bäume der Stadt Konstanz (Höhe)') +
@@ -389,8 +411,8 @@ ggmap(map) +
     theme(legend.position="bottom") +
     scale_color_continuous(name='Höhe in Meter')
 ```
-**Karte: Verteilung der Bäume der Stadt Konstanz im Stadtgebiet, hervorgehoben ist die Höhe der eingezeichneten Bäume.**
 
+**Abbildung: Verteilung der Bäume der Stadt Konstanz über das Stadtgebiet, hervorgehoben ist die Höhe der eingezeichneten Bäume.**
 
 #### Kronendurchmesser
 
@@ -402,30 +424,20 @@ ggplot(kataster %>% filter(!is.na(kronendurchmesser))) +
     labs(title='Bäume der Stadt Konstanz (Kronendurchmesser)', x='Kronendurchmesser [m]', y='Anzahl Bäume') +
     theme_bw()
 ```
-**Abbildung: Verteilung de Kronendurchmessers der Bäume der Stadt Konstanz.**
 
-```{r}
-kataster %>%
-    filter(!is.na(kronendurchmesser)) %>%
-    group_by(kronendurchmesser) %>%
-    summarize(n = n()) %>%
-    arrange(desc(kronendurchmesser)) %>%
-    select(Kronendurchmesser=kronendurchmesser, 'Anzahl Bäume'=n) %>%
-    kable %>%
-    kable_styling("striped", full_width = F) %>%
-    scroll_box(height = "300px")
-```
-**Tabelle: Verteilung des Kronendurchmessers der Bäume der Stadt Konstanz, sortiert nach Kronendurchmesser.**
+**Abbildung: Verteilung des Kronendurchmessers der Bäume der Stadt Konstanz.**
 
 ```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.12, 47.65, 9.22, 47.70)
 map <- get_stamenmap(bb, maptype="terrain", zoom=15)
+
 data <- kataster %>% 
     filter(!is.na(kronendurchmesser)) %>%
     filter(x >= bb[1] & x <= bb[3]) %>%
     filter(y >= bb[2] & y <= bb[4]) %>%
     arrange(kronendurchmesser)
 size <- data$kronendurchmesser / 10
+
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=kronendurchmesser), size=size, alpha=0.5) +
     labs(title='Bäume der Stadt Konstanz (Kronendurchmesser)') +
@@ -433,22 +445,23 @@ ggmap(map) +
     theme(legend.position="bottom") +
     scale_color_continuous(name='Kronendurchmesser in Meter')
 ```
-**Karte: Verteilung der Bäume der Stadt Konstanz im Stadtgebiet, hervorgehoben ist der Kromnendurchmesser der eingezeichneten Bäume.**
 
+**Abbildung: Verteilung der Bäume der Stadt Konstanz über das Stadtgebiet, hervorgehoben ist der Kronendurchmesser der eingezeichneten Bäume.**
 
 #### Standort
 
 Der Standort mit den mit Abstand meisten Bäumen ist der Hauptfriedhof. Dort lebt es sich offensichtöich am gesündesten. Das Baumkataster der Stadt Konstanzer enthält `r nrow(kataster[is.na(kataster$standort),])` Einträge ohne einen gültigen Wert für den Standort.
 
-
 ```{r, fig.align='center', out.width='800px'}
-N = 75
+N <- 75
+
 data <- kataster %>%
   filter(!is.na(name_de)) %>%
   group_by(standort) %>%
   summarize(n = n()) %>%
   filter(n > N) %>%
   arrange(desc(n))
+
 ggplot(data) +
     geom_bar(aes(x=reorder(standort, -n), y=n), stat = "identity") +
     labs(title=paste0('Bäume der Stadt Konstanz (Standort), Anzahl > ', N), x='Standort', y='Anzahl Bäume') +
@@ -456,42 +469,36 @@ ggplot(data) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
-```{r}
-kataster %>%
-    filter(!is.na(standort)) %>%
-    group_by(standort) %>%
-    summarize(n = n()) %>%
-    arrange(desc(n)) %>%
-    select(Standort=standort, 'Anzahl Bäume'=n) %>%
-    kable %>%
-    kable_styling("striped", full_width = F) %>%
-    scroll_box(height = "300px")
-```
-**Tabelle: Verteilung der Standorte der Bäume der Stadt Konstanz, sortiert nach Anzahl der Bäume des Standorts.**
-
+**Abbildung: Verteilung der Standorte der Bäume der Stadt Konstanz im Stadtgebiet für Standorte mit mehr als `r N` Bäumen.**
 
 ```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.08, 47.65, 9.22, 47.75)
 map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+
+data <- kataster %>% 
+  filter(!is.na(y))
+
 ggmap(map) +
-    geom_point(data=kataster %>% filter(!is.na(y) ), aes(x=x, y=y), size=0.25, alpha=0.25) +
+    geom_point(data=data, aes(x=x, y=y), size=0.25, alpha=0.25) +
     labs(title='Bäume der Stadt Konstanz (Standorte)') +
     theme_void() +
     theme(legend.position="bottom") 
 ```
-**Karte: Verteilung der Bäume der Stadt Konstanz.**
 
+**Abbildung: Verteilung der Bäume der Stadt Konstanz über das Stadtgebiet.**
 
 #### O<sub>2</sub> Produktion
 
-```{r}
+```{r to_centimeter, echo=FALSE}
 to_centimeter <- function(inch) return(inch*2.54)
 ```
+
+Die Sauerstoffproduktion eines Baums ist proportional zu seinem Druchmesser in Brusthöhe (Novak 2007b). Mit einem Durchmesser von `r to_centimeter(1)`–`r to_centimeter(3)` cm produzieren Bäume ≈2.9 kg O<sub>2</sub>/Jahr;  mit `r to_centimeter(9)`–`r to_centimeter(12)` cm: 22.6 kg O<sub>2</sub>/Jahr; `r to_centimeter(18)`–`r to_centimeter(21)` cm: 45.6 kg O<sub>2</sub>/Jahr; `r to_centimeter(27)`–`r to_centimeter(30)` cm: 91.1 kg O<sub>2</sub>/Jahr; und mit mehr als `r to_centimeter(30)` cm: 110.3 kg O<sub>2</sub>/Jahr. Zwischenwerte habe ich gemittelt.
 
 ```{r}
 # O2 Produktion in Kilogram pro Jahr.
 dfs = list(
-    # Novak (2007)
+    # Novak (2007b)
     kataster %>% 
         filter(stammumfang/pi <= to_centimeter(3)) %>%
         mutate(o2_produktion = 2.9),
@@ -501,7 +508,7 @@ dfs = list(
         filter((stammumfang/pi > to_centimeter(3)) & (stammumfang/pi < to_centimeter(9))) %>%
         mutate(o2_produktion = (2.9 + 22.6)/2),
 
-    # Novak (2007)
+    # Novak (2007b)
     kataster %>% 
         filter((stammumfang/pi >= to_centimeter(9)) & (stammumfang/pi <= to_centimeter(12))) %>%
         mutate(o2_produktion = 22.6),
@@ -511,7 +518,7 @@ dfs = list(
         filter((stammumfang/pi > to_centimeter(12)) & (stammumfang/pi < to_centimeter(18))) %>%
         mutate(o2_produktion = (22.6 + 45.6)/2),
     
-    # Novak (2007)
+    # Novak (2007b)
     kataster %>% 
         filter((stammumfang/pi >= to_centimeter(18)) & (stammumfang/pi <= to_centimeter(21) )) %>%
         mutate(o2_produktion = 45.6),
@@ -521,33 +528,35 @@ dfs = list(
         filter((stammumfang/pi > to_centimeter(21)) &  (stammumfang/pi < to_centimeter(27))) %>%
         mutate(o2_produktion = (45.6 + 91.1)/2),
     
-    # Novak (2007)
+    # Novak (2007b)
     kataster %>% 
         filter((stammumfang/pi >= to_centimeter(27)) & (stammumfang/pi <= to_centimeter(30) )) %>%
         mutate(o2_produktion = 91.1),
     
-    # Novak (2007)
+    # Novak (2007b)
     kataster %>% filter(stammumfang/pi > to_centimeter(30)) %>%
         mutate(o2_produktion = 110.3)
 )
 kataster <- do.call('rbind', dfs)
 ```
 
-**O<sub>2</sub>-Produktion der Bäume der Stadt Konstanz in Tonnen pro Jahr**
 ```{r}
 o2_produktion = sum(kataster$o2_produktion)/1000
-o2_produktion
 ```
 
-```{r, fig.align='center', out.width='1000px', message=FALSE}
+Die Bäume der Stadt Konstanz erzeugen somit pro Jahr `r o2_produktion` Tonnen O<sub>2</sub>.
+
+```{r, fig.align='center', out.width='800px', message=FALSE}
 bb <- c(9.08, 47.65, 9.22, 47.75)
 map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+
 data <- kataster %>% 
     filter(!is.na(o2_produktion)) %>%
     filter(x >= bb[1] & x <= bb[3]) %>%
     filter(y >= bb[2] & y <= bb[4]) %>%
     arrange(o2_produktion)
 size <- data$o2_produktion / 75
+
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=o2_produktion), size=size, alpha=0.25) +
     labs(title=expression('Bäume der Stadt Konstanz ('*O[2]*'-Produktion)')) +
@@ -556,19 +565,23 @@ ggmap(map) +
     scale_color_continuous(name=expression('Kilogramm '*O[2]*' pro Jahr'), low = "black", high = "green")
 ```
 
+**Abbildung: Verteilung der Bäume der Stadt Konstanz im Stadtgebiet, hervorgehoben ist die O<sub>2</sub>-Produktion der eingezeichneten Bäume.**
+
 #### CO<sub>2</sub> Aufnahme
 
-```{r}
+```{r to_kilogramm, echo=FALSE}
 to_kilogram <- function(lbs) return(lbs*0.453592)
 ```
+
+Die Kohlendioxidaufnahme eines Baums ist proportional zu seinem Druchmesser in Brusthöhe (Novak 2007a). Mit einem Durchmesser von `r to_centimeter(1)`–`r to_centimeter(3)` cm nehmen Bäume ≈`r to_kilogram(0.201)` kg CO<sub>2</sub>/Jahr auf;  mit `r to_centimeter(3)`–`r to_centimeter(6)` cm: `r to_kilogram(5.7)` kg CO<sub>2</sub>/Jahr; `r to_centimeter(6)`–`r to_centimeter(9)` cm: `r to_kilogram(10.3)` kg CO<sub>2</sub>/Jahr; `r to_centimeter(27)`–`r to_centimeter(30)` cm: 91.1 kg O<sub>2</sub>/Jahr; und mit mehr als `r to_centimeter(30)` cm: 110.3 kg O<sub>2</sub>/Jahr. Zwischenwerte habe ich gemittelt.
 
 ```{r}
 # CO2 Aufnahme in Kilogram pro Jahr.
 dfs = list(
     # Novak (2007a)
-    kataster %>% 
-        filter(stammumfang/pi <= to_centimeter(3)) %>%
-        mutate(co2_aufnahme = to_kilogram(0.201)),
+#    kataster %>% 
+#        filter(stammumfang/pi <= to_centimeter(3)) %>%
+#        mutate(co2_aufnahme = ),
 
     # Novak (2007a)
     kataster %>% 
@@ -622,21 +635,23 @@ dfs = list(
 kataster <- do.call('rbind', dfs)
 ```
 
-**CO<sub>2</sub>-Aufnahme der Bäume der Stadt Konstanz in Tonnen pro Jahr**
 ```{r}
 co2_aufnahme = sum(kataster$co2_aufnahme)/1000
-co2_aufnahme
 ```
+
+Die Bäume der Stadt Konstanz nehmen somit pro Jahr `r co2_aufnahme` Tonnen CO<sub>2</sub> auf.
 
 ```{r, fig.align='center', out.width='1000px', message=FALSE}
 bb <- c(9.08, 47.65, 9.22, 47.75)
 map <- get_stamenmap(bb, maptype="terrain", zoom=14)
+
 data <- kataster %>% 
     filter(!is.na(co2_aufnahme)) %>%
     filter(x >= bb[1] & x <= bb[3]) %>%
     filter(y >= bb[2] & y <= bb[4]) %>%
     arrange(co2_aufnahme)
 size <- data$co2_aufnahme / 75
+
 ggmap(map) +
     geom_point(data=data, aes(x=x, y=y, color=co2_aufnahme), size=size, alpha=0.25) +
     labs(title=expression('Bäume in Konstanz ('*CO[2]*' Aufnahme)')) +
@@ -644,6 +659,8 @@ ggmap(map) +
     theme(legend.position="bottom") +
     scale_color_continuous(name=expression('Kilogramm '*CO[2]*' pro Jahr'), low = "black", high = "green")
 ```
+
+**Abbildung: Verteilung der Bäume der Stadt Konstanz im Stadtgebiet, hervorgehoben ist die CO<sub>2</sub>-Aufnahme der eingezeichneten Bäume.**
 
 ### Konstanzer
 
@@ -695,7 +712,6 @@ konstanzer <- read.csv("data/Einwohner_nach_Stadtviertel 2010-2019.csv", sep=";"
 konstanzer$Altersklasse = factor(konstanzer$Altersklasse,levels(konstanzer$Altersklasse)[c(6,1:5)])
 ```
 
-
 ```{r, out.width='1000px'}
 konstanzer %>% 
     filter(Stichtag==as.Date('31.12.2019','%d.%m.%Y') | Stichtag==as.Date('31.12.2010','%d.%m.%Y')) %>%
@@ -709,6 +725,8 @@ konstanzer %>%
         theme_bw() +
         theme(legend.position="bottom")
 ```
+
+**Abbildung: Verteilung der Konstanzer Einwohner (Stadt) auf Altersklassen.**
 
 ```{r, out.width='1000px'}
 konstanzer %>% 
@@ -724,6 +742,8 @@ konstanzer %>%
         theme(legend.position="bottom")
 ```
 
+**Abbildung: Verteilung der Konstanzer Einwohner (Vororte) auf Altersklassen.**
+
 Erwachsene Konstanzer im Jahr 2019
 ```{r}
 erwachsene <- konstanzer %>%
@@ -731,7 +751,6 @@ erwachsene <- konstanzer %>%
     filter(Altersklasse != 'unter 18')
 sum(erwachsene$Anzahl)
 ```
-
 
 #### O<sub>2</sub> Verbrauch
 
@@ -792,8 +811,19 @@ Ermöglicht wurde das ganze im Rahmen HACK AND HARVEST Hackathon 2021 mit:
 
 ## Literatur
 
-Nowak, David J.; Hoehn, Robert E. III, Crane, Daniel E.; Stevens, Jack C.; Walton, Jeffrey T. 2007a. Assessing urban forest effects and values, New York City’s urban forest. Resour. Bull. NRS-9. Newtown Square, PA: U.S. Department of Agriculture, Forest Service, Northern Research Station. 22 p. Heruntergeladen am 16.04.2021 von [hier](https://www.nrs.fs.fed.us/pubs/rb/rb_nrs009.pdf)
+Nowak, David J.; Hoehn, Robert E. III, Crane, Daniel E.; Stevens, Jack C.; Walton, Jeffrey T. (2007a) Assessing urban forest effects and values, New York City’s urban forest. Resour. Bull. NRS-9. Newtown Square, PA: U.S. Department of Agriculture, Forest Service, Northern Research Station. 22 p. Heruntergeladen am 16.04.2021 von [hier](https://www.nrs.fs.fed.us/pubs/rb/rb_nrs009.pdf)
 
-Nowak, David J.; Crane, Daniel E.; 2007b; Oxygen production by urban trees in the United States; Arboriculture & Urban Forestry 33(3); Heruntergeladen am 16.04.2021 von [hier](https://www.researchgate.net/publication/228633757_Oxygen_production_by_urban_trees_in_the_United_States)
+Nowak, David J.; Crane, Daniel E. (2007b) Oxygen production by urban trees in the United States; Arboriculture & Urban Forestry 33(3); Heruntergeladen am 16.04.2021 von [hier](https://www.researchgate.net/publication/228633757_Oxygen_production_by_urban_trees_in_the_United_States)
 
-Perry, J.; LeVan, M.D.; 2003; Air Purification in Closed Environments: Overview of Spacecraft Systems. U.S. Army Natrick Soldier Center.; Heruntergeladen am 17.04.2021 von [hier](https://www.researchgate.net/profile/Jay-Perry/publication/23903409_Air_Purification_in_Closed_Environments_An_Overview_of_Spacecraft_Systems/links/54f78f510cf2ccffe9db44b4/Air-Purification-in-Closed-Environments-An-Overview-of-Spacecraft-Systems.pdf)
+Perry, J.; LeVan, M.D. (2003) Air Purification in Closed Environments: Overview of Spacecraft Systems. U.S. Army Natrick Soldier Center.; Heruntergeladen am 17.04.2021 von [hier](https://www.researchgate.net/profile/Jay-Perry/publication/23903409_Air_Purification_in_Closed_Environments_An_Overview_of_Spacecraft_Systems/links/54f78f510cf2ccffe9db44b4/Air-Purification-in-Closed-Environments-An-Overview-of-Spacecraft-Systems.pdf)
+
+## Anhang
+
+```{r to_centimeter, echo=TRUE}
+```
+
+```{r to_kilogramm, echo=TRUE}
+```
+
+```{r trim, echo=TRUE}
+```
